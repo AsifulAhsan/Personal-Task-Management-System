@@ -1,6 +1,21 @@
-[00:00:03.562] Server  LOG      ✓ Ready in 2.5s
-[00:00:10.334] Server  LOG      ○ Compiling / ...
-[00:00:12.272] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:12.570] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
-[00:00:12.571] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/","route":"/"}
-[00:00:12.571] Browser LOG     %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/ color: rgb(120, 120, 120) color: inherit {"dp":"/","o":"http://localhost:3000/","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.3.1","sv":"0.1.3","ts":1764085574761}
+[00:00:03.501] Server  LOG      ✓ Ready in 2.7s
+[00:00:10.361] Server  LOG      ○ Compiling / ...
+[00:00:16.443] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:16.824] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[00:00:16.824] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/","route":"/"}
+[00:00:16.824] Browser LOG     %c[Vercel Web Analytics]%c [pageview] http://localhost:3000/ color: rgb(120, 120, 120) color: inherit {"dp":"/","o":"http://localhost:3000/","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.3.1","sv":"0.1.3","ts":1764087462740}
+[00:03:56.723] Server  LOG     🔵 LOGIN API CALLED
+[00:03:57.501] Server  LOG     ✅ LOGIN SUCCESSFUL: "test@email.com"
+[00:20:19.784] Server  LOG      ✓ Compiled in 282ms
+[00:20:54.073] Browser ERROR   ./app/layout.tsx:13:8
+Parsing ecmascript source code failed
+  11 |   
+  12 |
+> 13 | export default function RootLayout({
+     |        ^^^^^^^
+  14 |   children,
+  15 | }: Readonly<{
+  16 |   children: React.ReactNode
+
+Unexpected token `default`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+[00:21:04.477] Server  LOG      ✓ Compiled in 161ms

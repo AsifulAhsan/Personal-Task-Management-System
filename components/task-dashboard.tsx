@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react"
 import { TaskList } from "./task-list"
 import { TaskForm } from "./task-form"
+import { fetchTasks, createTask, updateTask, deleteTask } from "@/lib/api"
 
 export interface Task {
-  id: string
+  _id: string
+  id: string  // Keep for compatibility with existing components
   title: string
   description: string
   status: "pending" | "in-progress" | "completed"
@@ -14,7 +16,7 @@ export interface Task {
 }
 
 interface TaskDashboardProps {
-  user: { email: string; name: string }
+  user: { email: string; name: string; token: string }
   onLogout: () => void
 }
 
@@ -23,38 +25,78 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [filter, setFilter] = useState<"all" | "pending" | "in-progress" | "completed">("all")
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
+  // Load tasks on mount
   useEffect(() => {
-    const storedTasks = localStorage.getItem("taskapp_tasks")
-    if (storedTasks) {
-      setTasks(JSON.parse(storedTasks))
-    }
+    loadTasks()
   }, [])
 
-  useEffect(() => {
-    localStorage.setItem("taskapp_tasks", JSON.stringify(tasks))
-  }, [tasks])
-
-  const handleCreateTask = (task: Omit<Task, "id" | "createdAt">) => {
-    const newTask: Task = {
-      ...task,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
+  const loadTasks = async () => {
+    try {
+      setIsLoading(true)
+      setError("")
+      const fetchedTasks = await fetchTasks()
+      
+      // Map MongoDB _id to id for compatibility
+      const mappedTasks = fetchedTasks.map((task: any) => ({
+        ...task,
+        id: task._id,
+      }))
+      
+      setTasks(mappedTasks)
+    } catch (err: any) {
+      setError("Failed to load tasks")
+      console.error("Load tasks error:", err)
+    } finally {
+      setIsLoading(false)
     }
-    setTasks([newTask, ...tasks])
-    setIsFormOpen(false)
   }
 
-  const handleUpdateTask = (task: Omit<Task, "id" | "createdAt">) => {
-    if (editingTask) {
-      setTasks(tasks.map((t) => (t.id === editingTask.id ? { ...t, ...task } : t)))
+  const handleCreateTask = async (task: Omit<Task, "id" | "createdAt" | "_id">) => {
+    try {
+      setError("")
+      const newTask = await createTask(task)
+      
+      setTasks([{ ...newTask, id: newTask._id }, ...tasks])
+      setIsFormOpen(false)
+    } catch (err: any) {
+      setError(err.message || "Failed to create task")
+      console.error("Create task error:", err)
+    }
+  }
+
+  const handleUpdateTask = async (task: Omit<Task, "id" | "createdAt" | "_id">) => {
+    if (!editingTask) return
+
+    try {
+      setError("")
+      const updatedTask = await updateTask(editingTask._id, task)
+      
+      setTasks(tasks.map((t) => 
+        t._id === editingTask._id 
+          ? { ...updatedTask, id: updatedTask._id } 
+          : t
+      ))
+      
       setEditingTask(null)
       setIsFormOpen(false)
+    } catch (err: any) {
+      setError(err.message || "Failed to update task")
+      console.error("Update task error:", err)
     }
   }
 
-  const handleDeleteTask = (id: string) => {
-    setTasks(tasks.filter((t) => t.id !== id))
+  const handleDeleteTask = async (id: string) => {
+    try {
+      setError("")
+      await deleteTask(id)
+      setTasks(tasks.filter((t) => t._id !== id && t.id !== id))
+    } catch (err: any) {
+      setError(err.message || "Failed to delete task")
+      console.error("Delete task error:", err)
+    }
   }
 
   const handleEditTask = (task: Task) => {
@@ -144,6 +186,38 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
       </header>
 
       <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "32px 24px" }}>
+        {/* Error Message */}
+        {error && (
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "12px 16px",
+              background: "#FFEBEE",
+              border: "1px solid #FFCDD2",
+              color: "#C62828",
+              fontSize: "13px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span>{error}</span>
+            <button
+              onClick={() => setError("")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#C62828",
+                fontSize: "18px",
+                cursor: "pointer",
+                padding: "0 8px",
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {/* Stats Bar */}
         <div
           style={{
@@ -250,8 +324,8 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
           </button>
         </div>
 
-        {/* Task List */}
-        {filteredTasks.length === 0 ? (
+        {/* Loading State */}
+        {isLoading ? (
           <div
             style={{
               background: "#FFFFFF",
@@ -262,12 +336,29 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
           >
             <div
               style={{
-                fontSize: "48px",
-                marginBottom: "16px",
+                width: "40px",
+                height: "40px",
+                border: "3px solid #FFB300",
+                borderTop: "3px solid transparent",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+                margin: "0 auto 16px",
               }}
-            >
-              📋
-            </div>
+            />
+            <p style={{ fontSize: "14px", color: "#757575", margin: 0 }}>
+              Loading tasks...
+            </p>
+          </div>
+        ) : filteredTasks.length === 0 ? (
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "2px solid #E0E0E0",
+              padding: "60px 20px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>📋</div>
             <h3
               style={{
                 fontSize: "18px",
@@ -278,14 +369,10 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
             >
               No tasks found
             </h3>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#757575",
-                margin: 0,
-              }}
-            >
-              {filter === "all" ? "Create your first task to get started" : `No ${filter.replace("-", " ")} tasks`}
+            <p style={{ fontSize: "14px", color: "#757575", margin: 0 }}>
+              {filter === "all" 
+                ? "Create your first task to get started" 
+                : `No ${filter.replace("-", " ")} tasks`}
             </p>
           </div>
         ) : (

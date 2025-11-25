@@ -1,22 +1,22 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 
 interface SignupFormProps {
-  onSignup: (email: string, password: string, name: string) => void
+  onSignup: (email: string, password: string, name: string) => Promise<void>
+  isLoading?: boolean
 }
 
-export function SignupForm({ onSignup }: SignupFormProps) {
+export function SignupForm({ onSignup, isLoading }: SignupFormProps) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (email && password && name) {
-      onSignup(email, password, name)
+      await onSignup(email, password, name)
     }
   }
 
@@ -41,6 +41,7 @@ export function SignupForm({ onSignup }: SignupFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          disabled={isLoading}
           style={{
             width: "100%",
             padding: "12px 14px",
@@ -50,8 +51,10 @@ export function SignupForm({ onSignup }: SignupFormProps) {
             color: "#000000",
             outline: "none",
             transition: "border-color 0.2s",
+            opacity: isLoading ? 0.6 : 1,
+            cursor: isLoading ? "not-allowed" : "text",
           }}
-          onFocus={(e) => (e.target.style.borderColor = "#FFB300")}
+          onFocus={(e) => !isLoading && (e.target.style.borderColor = "#FFB300")}
           onBlur={(e) => (e.target.style.borderColor = "#E0E0E0")}
           placeholder="John Doe"
         />
@@ -76,6 +79,7 @@ export function SignupForm({ onSignup }: SignupFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          disabled={isLoading}
           style={{
             width: "100%",
             padding: "12px 14px",
@@ -85,8 +89,10 @@ export function SignupForm({ onSignup }: SignupFormProps) {
             color: "#000000",
             outline: "none",
             transition: "border-color 0.2s",
+            opacity: isLoading ? 0.6 : 1,
+            cursor: isLoading ? "not-allowed" : "text",
           }}
-          onFocus={(e) => (e.target.style.borderColor = "#FFB300")}
+          onFocus={(e) => !isLoading && (e.target.style.borderColor = "#FFB300")}
           onBlur={(e) => (e.target.style.borderColor = "#E0E0E0")}
           placeholder="your@email.com"
         />
@@ -111,6 +117,8 @@ export function SignupForm({ onSignup }: SignupFormProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          minLength={6}
+          disabled={isLoading}
           style={{
             width: "100%",
             padding: "12px 14px",
@@ -120,39 +128,47 @@ export function SignupForm({ onSignup }: SignupFormProps) {
             color: "#000000",
             outline: "none",
             transition: "border-color 0.2s",
+            opacity: isLoading ? 0.6 : 1,
+            cursor: isLoading ? "not-allowed" : "text",
           }}
-          onFocus={(e) => (e.target.style.borderColor = "#FFB300")}
+          onFocus={(e) => !isLoading && (e.target.style.borderColor = "#FFB300")}
           onBlur={(e) => (e.target.style.borderColor = "#E0E0E0")}
-          placeholder="Create a password"
+          placeholder="Create a password (min 6 characters)"
         />
       </div>
 
       <button
         type="submit"
+        disabled={isLoading}
         style={{
           width: "100%",
           padding: "14px",
-          background: "#FFB300",
+          background: isLoading ? "#FFD54F" : "#FFB300",
           border: "2px solid #FFA000",
           color: "#000000",
           fontSize: "14px",
           fontWeight: "700",
-          cursor: "pointer",
+          cursor: isLoading ? "not-allowed" : "pointer",
           transition: "all 0.2s",
           textTransform: "uppercase",
           letterSpacing: "0.5px",
           marginTop: "8px",
+          opacity: isLoading ? 0.6 : 1,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#FFA000"
-          e.currentTarget.style.transform = "translateY(-1px)"
+          if (!isLoading) {
+            e.currentTarget.style.background = "#FFA000"
+            e.currentTarget.style.transform = "translateY(-1px)"
+          }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = "#FFB300"
-          e.currentTarget.style.transform = "translateY(0)"
+          if (!isLoading) {
+            e.currentTarget.style.background = "#FFB300"
+            e.currentTarget.style.transform = "translateY(0)"
+          }
         }}
       >
-        Create Account
+        {isLoading ? "Creating account..." : "Create Account"}
       </button>
     </form>
   )

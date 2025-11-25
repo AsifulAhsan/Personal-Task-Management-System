@@ -1,8 +1,26 @@
 // lib/api.ts
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+// Smart URL builder that works in both environments
+const getApiUrl = (path: string) => {
+  // Client-side: use relative URL (same origin) - works in both dev and production
+  if (typeof window !== 'undefined') {
+    return `/api${path}`;
+  }
+  
+  // Server-side (Server Components, SSR, API routes): 
+  // Use full URL only when explicitly provided, otherwise relative
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (baseUrl) {
+    return `${baseUrl}/api${path}`;
+  }
+  
+  // Default to relative URL for server-side too
+  return `/api${path}`;
+};
 
 function getAuthHeaders() {
-  const token = localStorage.getItem('taskapp_token');
+  // Safe localStorage access - only in browser
+  const token = typeof window !== 'undefined' ? localStorage.getItem('taskapp_token') : null;
   return {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -11,7 +29,7 @@ function getAuthHeaders() {
 
 // Auth APIs
 export async function registerUser(email: string, password: string, name: string) {
-  const response = await fetch(`${API_URL}/api/auth/register`, {
+  const response = await fetch(getApiUrl('/auth/register'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, name }),
@@ -27,7 +45,7 @@ export async function registerUser(email: string, password: string, name: string
 }
 
 export async function loginUser(email: string, password: string) {
-  const response = await fetch(`${API_URL}/api/auth/login`, {
+  const response = await fetch(getApiUrl('/auth/login'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -44,7 +62,7 @@ export async function loginUser(email: string, password: string) {
 
 // Task APIs
 export async function fetchTasks() {
-  const response = await fetch(`${API_URL}/api/tasks`, {
+  const response = await fetch(getApiUrl('/tasks'), {
     headers: getAuthHeaders(),
   });
 
@@ -62,7 +80,7 @@ export async function createTask(taskData: {
   status?: string;
   priority?: string;
 }) {
-  const response = await fetch(`${API_URL}/api/tasks`, {
+  const response = await fetch(getApiUrl('/tasks'), {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(taskData),
@@ -78,7 +96,7 @@ export async function createTask(taskData: {
 }
 
 export async function updateTask(id: string, updates: any) {
-  const response = await fetch(`${API_URL}/api/tasks`, {
+  const response = await fetch(getApiUrl('/tasks'), {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify({ id, ...updates }),
@@ -94,7 +112,7 @@ export async function updateTask(id: string, updates: any) {
 }
 
 export async function deleteTask(id: string) {
-  const response = await fetch(`${API_URL}/api/tasks?id=${id}`, {
+  const response = await fetch(getApiUrl(`/tasks?id=${id}`), {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });

@@ -1223,6 +1223,7 @@ function TaskForm({ task, onSubmit, onCancel }) {
 "use strict";
 
 // lib/api.ts
+// Smart URL builder that works in both environments
 __turbopack_context__.s([
     "createTask",
     ()=>createTask,
@@ -1237,9 +1238,22 @@ __turbopack_context__.s([
     "updateTask",
     ()=>updateTask
 ]);
-const API_URL = ("TURBOPACK compile-time value", "http://localhost:3000") || '';
+const getApiUrl = (path)=>{
+    // Client-side: use relative URL (same origin) - works in both dev and production
+    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+    ;
+    // Server-side (Server Components, SSR, API routes): 
+    // Use full URL only when explicitly provided, otherwise relative
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (baseUrl) {
+        return `${baseUrl}/api${path}`;
+    }
+    // Default to relative URL for server-side too
+    return `/api${path}`;
+};
 function getAuthHeaders() {
-    const token = localStorage.getItem('taskapp_token');
+    // Safe localStorage access - only in browser
+    const token = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : null;
     return {
         'Content-Type': 'application/json',
         ...token && {
@@ -1248,7 +1262,7 @@ function getAuthHeaders() {
     };
 }
 async function registerUser(email, password, name) {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
+    const response = await fetch(getApiUrl('/auth/register'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1266,7 +1280,7 @@ async function registerUser(email, password, name) {
     return data;
 }
 async function loginUser(email, password) {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
+    const response = await fetch(getApiUrl('/auth/login'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1283,7 +1297,7 @@ async function loginUser(email, password) {
     return data;
 }
 async function fetchTasks() {
-    const response = await fetch(`${API_URL}/api/tasks`, {
+    const response = await fetch(getApiUrl('/tasks'), {
         headers: getAuthHeaders()
     });
     if (!response.ok) {
@@ -1293,7 +1307,7 @@ async function fetchTasks() {
     return data.tasks;
 }
 async function createTask(taskData) {
-    const response = await fetch(`${API_URL}/api/tasks`, {
+    const response = await fetch(getApiUrl('/tasks'), {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(taskData)
@@ -1306,7 +1320,7 @@ async function createTask(taskData) {
     return data.task;
 }
 async function updateTask(id, updates) {
-    const response = await fetch(`${API_URL}/api/tasks`, {
+    const response = await fetch(getApiUrl('/tasks'), {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -1322,7 +1336,7 @@ async function updateTask(id, updates) {
     return data.task;
 }
 async function deleteTask(id) {
-    const response = await fetch(`${API_URL}/api/tasks?id=${id}`, {
+    const response = await fetch(getApiUrl(`/tasks?id=${id}`), {
         method: 'DELETE',
         headers: getAuthHeaders()
     });
